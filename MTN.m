@@ -2,6 +2,8 @@ function [q_c, dq_c, ddq_c, torque_c] = MTN(varargin)
 % Min Torque Norm method
 disp('MTN method')
 
+import casadi.*;
+
 t = varargin{1}; % time vector
 q0 = varargin{2}; % initial configuration
 jac = varargin{3}; % task jac
@@ -30,27 +32,27 @@ for i=1:size(t, 2)
     qi = q_c(:, i); dqi = dq_c(:, i);
     
     % optimal ddq
-    Mqi = double(subs(M, q, qi));
-    jaci = double(subs(jac, q, qi));
-    jinv = double(subs(jacinv, q, qi));
-    djaci = double(subs(djac, [q dq], [qi dqi]));
+    Mqi = substitute(M, q, qi);
+    jaci = substitute(jac, q, qi);
+    jinv = substitute(jacinv, q, qi);
+    djaci = substitute(djac, [q dq], [qi dqi]);
+    ci = substitute(c, [q dq], [qi dqi]);
     
     ddphi = 0.5 * pinv(Mqi * (eye() - jinv * jaci)) * ...
-        (sum(tb, 2) - 2 * Mqi * jinv * (ddp(:, i) - djaci * dqi));
+        (sum(tb, 2) - 2 * Mqi * jinv * (ddp(:, i) - djaci * dqi) - 2 * ci);
+    ddqi = jinv * (ddp(:, i) - djaci * dqi) + ddphi;
     
-    ddqi = jinv * (ddp(:, i) - djaci * dqi) + (eye() - jinv * jaci) * ddphi;
-    ddq_c(:, i) = ddqi;
+    ddq_c(:, i) = full(evalf(ddqi));
     
     % min norm torque
-    ci = subs(c, [q dq], [qi dqi]);
     torquei = Mqi * ddqi + ci;
-    torque_c(:, i) = torquei;
+    torque_c(:, i) = full(evalf(torquei));
     
     % next state (using euler integration)
-    q_c(:, i + 1) = qi + dqi * ts + 0.5 * ddqi * ts^2;
-    dq_c(:, i + 1) = dqi + ddqi * ts;
+    q_c(:, i + 1) = qi + dqi * ts;
+    dq_c(:, i + 1) = full(evalf(dqi + ddqi * ts));
     
-    break %TODO: remove this
+%     break %TODO: remove this
 end
 
 end

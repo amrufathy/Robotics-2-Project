@@ -7,10 +7,10 @@ function [t, p, dp, ddp] = generateLinearTrajectory(A, p0, pf)
     % timing law
     [t, sigma, dsigma, ddsigma] = generateTimingLaw(A, L);
     
-    % s = sigma / L path length [0, 1]
+    s = sigma / L; % s [0, 1]
     
     % trajectory (note that ||v/L|| = 1)
-    p = p0 + sigma;
+    p = p0 + s .* (pf - p0);
     dp = dsigma .* [1; 1]; % dsigma in both directions
     ddp = ddsigma .* [1; 1]; % ddsigma in both directions
     

@@ -4,8 +4,13 @@
 
 % clear; close all; clc;
 
-syms q1 q2 q3 dq1 dq2 dq3 real
-syms m l Il real
+import casadi.*;
+
+q1 = MX.sym('q1'); q2 = MX.sym('q2'); q3 = MX.sym('q3'); 
+dq1 = MX.sym('dq1'); dq2 = MX.sym('dq2'); dq3 = MX.sym('dq3'); 
+
+% substitution of dynamic variables
+m = 1; l = 1; Il = 1/12;
 
 N = 3;
 
@@ -29,59 +34,23 @@ djac = -1 * [
     sin(q1 + q2 + q3) * (dq1 + dq2 + dq3)]
 ];
 
-% position of CoM
-pc = cell(1, N);
-pc{1} = [l/2 * cos(q1); l/2 * sin(q1)];
-pc{2} = [l * cos(q1) + l/2 * cos(q1 + q2); l * sin(q1) + l/2 * sin(q1 + q2)];
-pc{3} = [l * (cos(q1) + cos(q1 + q2)) + l/2 * cos(q1 + q2 + q3);
-        l * (sin(q1) + sin(q1 + q2)) + l/2 * sin(q1 + q2 + q3)];
-
-% angular velocities
-w = cell(1, N);
-w{1} = [0; 0; dq1];
-w{2} = [0; 0; dq1 + dq2];
-w{3} = [0; 0; dq1 + dq2 + dq3];
-
-vc = cell(1, N);
-for i=1:N
-    vc{i} = 0;
-    for j=1:i
-        vc{i} = simplify(vc{i} + diff(pc{i}, q(j)) *  dq(j));
-    end
-end
-
-% total kinetic energy
-Ti = cell(1, N);
-for i=1:N
-    Ti{i} = simplify(0.5 * m * vc{i}' * vc{i} + ...
-        0.5 * Il * w{i}' * w{i});
-end
-T = simplify(sum([Ti{:}]));
-
 % inertia matrix
-for i=1:N
-    for j=1:N
-        M(i, j) = simplify(diff(diff(T, dq(i)), dq(j)));
-    end
-end
-M = collect(M, [m l^2]);
+% precomputed symbolically using matlab
+M = [ 
+[         cos(q2 + q3) + 3*cos(q2) + cos(q3) + 4, cos(q2 + q3)/2 + (3*cos(q2))/2 + cos(q3) + 5/3, cos(q2 + q3)/2 + cos(q3)/2 + 1/3];
+[ cos(q2 + q3)/2 + (3*cos(q2))/2 + cos(q3) + 5/3,                                  cos(q3) + 5/3,                  cos(q3)/2 + 1/3];
+[               cos(q2 + q3)/2 + cos(q3)/2 + 1/3,                                cos(q3)/2 + 1/3,                              1/3];
+];
+
 Minv = simplify(pinv(M));
 
 % coriolis and centrifugal terms
-c = [];
-for i=1:N
-    C = 0.5 * (jacobian(M(:, i), q) + jacobian(M(:, i), q)' - diff(M, q(i)));
-    c = [c; simplify(dq' * C * dq)];
-end
-
-% substitution of dynamic variables
-old = [m l Il]; new = [1 1 1/12];
-fk = subs(fk, old, new);
-jac = subs(jac, old, new);
-jacinv = subs(jacinv, old, new);
-M = subs(M, old, new);
-Minv = subs(Minv, old, new);
-c = subs(c, old, new);
+% precomputed symbolically using matlab
+c = [
+ - (3*dq2^2*sin(q2))/2 - (dq3^2*sin(q3))/2 - (dq2^2*sin(q2 + q3))/2 - (dq3^2*sin(q2 + q3))/2 - 3*dq1*dq2*sin(q2) - dq1*dq3*sin(q3) - dq2*dq3*sin(q3) - dq1*dq2*sin(q2 + q3) - dq1*dq3*sin(q2 + q3) - dq2*dq3*sin(q2 + q3);
+                                                                                                                     (3*dq1^2*sin(q2))/2 - (dq3^2*sin(q3))/2 + (dq1^2*sin(q2 + q3))/2 - dq1*dq3*sin(q3) - dq2*dq3*sin(q3);
+                                                                                                                                         (dq1^2*sin(q3))/2 + (dq2^2*sin(q3))/2 + (dq1^2*sin(q2 + q3))/2 + dq1*dq2*sin(q3)
+];
 
 % clear unneeded vars
-clear pc vc w Ti T C m l Il
+clear fk pc vc w Ti T C m l Il
