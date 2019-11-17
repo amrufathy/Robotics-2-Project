@@ -9,16 +9,11 @@ import casadi.*;
 q1 = MX.sym('q1'); q2 = MX.sym('q2'); q3 = MX.sym('q3'); 
 dq1 = MX.sym('dq1'); dq2 = MX.sym('dq2'); dq3 = MX.sym('dq3'); 
 
-% substitution of dynamic variables
-m = 1; l = 1; Il = 1/12;
-
-N = 3;
-
 q = [q1; q2; q3];
 dq = [dq1; dq2; dq3];
 
 % forward kinematics
-fk = l * [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
+fk = [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
         sin(q1) + sin(q1 + q2) + sin(q1 + q2 + q3)];
 
 % task jacobian
@@ -53,4 +48,4 @@ c = [
 ];
 
 % clear unneeded vars
-clear fk pc vc w Ti T C m l Il
+clear fk q1 q2 q3 dq1 dq2 dq3

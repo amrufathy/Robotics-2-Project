@@ -1,12 +1,12 @@
 % clear; 
 close all; clc;
-addpath('casadi-linux-matlabR2014b-v3.5.1')
+addpath('../casadi-linux-matlabR2014b-v3.5.1')
 
 % invoke 3R dynamic model
 dyn_3r;
 
 % acceleration bound
-A = sqrt(2);
+A = 2;
 
 % linear path end points
 p0 = [1.4; -0.4]; pf = [1.6; -0.2]; % short path
@@ -35,4 +35,4 @@ ts = 0.001;
 % save('MTN_linear_short.mat', 'q_c', 'dq_c', 'ddq_c', 'torque_c')
 
 plotTorqueProfiles(t, torque_c)
-plotArm(q_c)
+plotArm(q_c, p0, pf)

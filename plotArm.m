@@ -1,20 +1,14 @@
-function plotArm(q)
+function plotArm(q, p0, pf)
 q1 = q(1, :);
 q2 = q(2, :);
 q3 = q(3, :);
 
 figure('Name', 'Arm');
+plot([p0(1) pf(1)], [p0(2) pf(2)], 'Color', 'black', 'LineWidth', 3); hold on;
 
-
-size(q, 2);
-step = floor(size(q, 2) / 10);
 for i = 1:150:size(q, 2)
     axis square; grid on;
 %     axis([0.0 2.5 -1.5 1]); %t2
-    
-%     ax = gca;
-%     ax.XAxisLocation = 'origin';
-%     ax.YAxisLocation = 'origin';
     
     % short form for trig functions
     q1i = q1(i); q2i = q2(i); q3i = q3(i);
