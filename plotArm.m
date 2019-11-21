@@ -4,11 +4,12 @@ q2 = q(2, :);
 q3 = q(3, :);
 
 figure('Name', 'Arm');
-plot([p0(1) pf(1)], [p0(2) pf(2)], 'Color', 'black', 'LineWidth', 3); hold on;
+plot([p0(1) pf(1)], [p0(2) pf(2)], 'Color', 'black', 'LineWidth', 4); hold on;
 
-for i = 1:150:size(q, 2)
+step = floor(size(q, 2) / 10);
+for i = 1:step:size(q, 2)
     axis square; grid on;
-%     axis([0.0 2.5 -1.5 1]); %t2
+    axis([0.0 2.5 -1.2 0.6]); %t2
     
     % short form for trig functions
     q1i = q1(i); q2i = q2(i); q3i = q3(i);
@@ -16,11 +17,11 @@ for i = 1:150:size(q, 2)
     s1 = sin(q1i); s12 = sin(q1i + q2i); s123 = sin(q1i + q2i + q3i);
 
     if i == 1
-        options = struct('Color', 'blue', 'LineWidth', 2);
-    elseif i + 150 >= size(q, 2)
-        options = struct('Color', 'green', 'LineWidth', 2);
+        options = struct('Color', 'blue', 'LineWidth', 4);
+    elseif i + step > size(q, 2)
+        options = struct('Color', 'green', 'LineWidth', 4);
     else
-        options = struct('Color', 'black', 'LineWidth', 0.5);
+        options = struct('Color', 'red', 'LineWidth', 1);
     end
     
     % plot each link

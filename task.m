@@ -9,8 +9,8 @@ dyn_3r;
 A = 2;
 
 % linear path end points
-p0 = [1.4; -0.4]; pf = [1.6; -0.2]; % short path
-% p0 = [1.4; -0.4]; pf = [2.25; 0.4]; % long path
+p0 = [1.4142; -0.4142]; pf = [1.615; -0.21]; % short path
+% p0 = [1.4142; -0.4142]; pf = [2.26; 0.4]; % long path
 path_length = norm(pf - p0)
 
 % circle center and arc origin (point on the arc)
@@ -28,9 +28,9 @@ tb = [-54 54; -24 24; -6 6];
 q0 = [-pi/4 3*pi/4 -3*pi/4]; % rad
 ts = 0.001;
 
-% [q_c, dq_c, ddq_c, torque_c] = PTR(t, q0, jac, jacinv, q, dq, p, dp, ddp, ts, M, Minv, c, tb, djac);
+[q_c, dq_c, ddq_c, torque_c] = PTR(t, q0, jac, jacinv, q, dq, p, dp, ddp, ts, M, Minv, c, tb, djac, fk);
 
-[q_c, dq_c, ddq_c, torque_c] = MTN(t, q0, jac, jacinv, q, dq, p, dp, ddp, ts, M, c, tb, djac);
+% [q_c, dq_c, ddq_c, torque_c] = MTN(t, q0, jac, q, dq, p, dp, ddp, ts, M, Minv, c, djac, fk);
 
 % save('MTN_linear_short.mat', 'q_c', 'dq_c', 'ddq_c', 'torque_c')
 

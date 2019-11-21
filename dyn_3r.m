@@ -6,6 +6,8 @@
 
 import casadi.*;
 
+% syms q1 q2 q3 dq1 dq2 dq3 a2 a3 d
+
 q1 = MX.sym('q1'); q2 = MX.sym('q2'); q3 = MX.sym('q3'); 
 dq1 = MX.sym('dq1'); dq2 = MX.sym('dq2'); dq3 = MX.sym('dq3'); 
 
@@ -19,33 +21,35 @@ fk = [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
 % task jacobian
 jac = jacobian(fk, q);
 jacinv = simplify(pinv(jac));
-djac = -1 * [
-    [cos(q1) * dq1 + cos(q1 + q2) * (dq1 + dq2) + cos(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    cos(q1 + q2) * (dq1 + dq2) + cos(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    cos(q1 + q2 + q3) * (dq1 + dq2 + dq3)];
-    
-    [sin(q1) * dq1 + sin(q1 + q2) * (dq1 + dq2) + sin(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    sin(q1 + q2) * (dq1 + dq2) + sin(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    sin(q1 + q2 + q3) * (dq1 + dq2 + dq3)]
+
+% djac = 0;
+% for i=1:length(q)
+%     djac = djac + simplify(diff(jac, q(i)) * dq(i));
+% end
+
+% d(J)/dt precomputed symbolically using matlab
+djac = [
+[ - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3) - dq1*cos(q1), - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3), -(dq1 + dq2 + dq3)*cos(q1 + q2 + q3)];
+[ - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3) - dq1*sin(q1), - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3), -(dq1 + dq2 + dq3)*sin(q1 + q2 + q3)]
 ];
 
 % inertia matrix
 % precomputed symbolically using matlab
 M = [ 
-[         cos(q2 + q3) + 3*cos(q2) + cos(q3) + 4, cos(q2 + q3)/2 + (3*cos(q2))/2 + cos(q3) + 5/3, cos(q2 + q3)/2 + cos(q3)/2 + 1/3];
-[ cos(q2 + q3)/2 + (3*cos(q2))/2 + cos(q3) + 5/3,                                  cos(q3) + 5/3,                  cos(q3)/2 + 1/3];
-[               cos(q2 + q3)/2 + cos(q3)/2 + 1/3,                                cos(q3)/2 + 1/3,                              1/3];
+[  10*cos(q2 + q3) + 30*cos(q2) + 10*cos(q3) + 40, 5*cos(q2 + q3) + 15*cos(q2) + 10*cos(q3) + 50/3, 5*cos(q2 + q3) + 5*cos(q3) + 10/3];
+[ 5*cos(q2 + q3) + 15*cos(q2) + 10*cos(q3) + 50/3,                               10*cos(q3) + 50/3,                  5*cos(q3) + 10/3];
+[               5*cos(q2 + q3) + 5*cos(q3) + 10/3,                                5*cos(q3) + 10/3,                              10/3]
 ];
-
 Minv = simplify(pinv(M));
 
 % coriolis and centrifugal terms
 % precomputed symbolically using matlab
 c = [
- - (3*dq2^2*sin(q2))/2 - (dq3^2*sin(q3))/2 - (dq2^2*sin(q2 + q3))/2 - (dq3^2*sin(q2 + q3))/2 - 3*dq1*dq2*sin(q2) - dq1*dq3*sin(q3) - dq2*dq3*sin(q3) - dq1*dq2*sin(q2 + q3) - dq1*dq3*sin(q2 + q3) - dq2*dq3*sin(q2 + q3);
-                                                                                                                     (3*dq1^2*sin(q2))/2 - (dq3^2*sin(q3))/2 + (dq1^2*sin(q2 + q3))/2 - dq1*dq3*sin(q3) - dq2*dq3*sin(q3);
-                                                                                                                                         (dq1^2*sin(q3))/2 + (dq2^2*sin(q3))/2 + (dq1^2*sin(q2 + q3))/2 + dq1*dq2*sin(q3)
+ (- 15*dq2^2 - 30*dq1*dq2)*sin(q2) + (- 10*dq1*dq3 - 10*dq2*dq3 - 5*dq3^2)*sin(q3) + (- 5*dq2^2 - 10*dq2*dq3 - 10*dq1*dq2 - 5*dq3^2 - 10*dq1*dq3)*sin(q2 + q3);
+                                                                       15*dq1^2*sin(q2) + (- 10*dq1*dq3 - 10*dq2*dq3 - 5*dq3^2)*sin(q3) + 5*dq1^2*sin(q2 + q3);
+                                                                                               (5*dq1^2 + 10*dq1*dq2 + 5*dq2^2)*sin(q3) + 5*dq1^2*sin(q2 + q3)
 ];
 
+disp('Computed dynamic model...')
 % clear unneeded vars
-clear fk q1 q2 q3 dq1 dq2 dq3
+clear q1 q2 q3 dq1 dq2 dq3
