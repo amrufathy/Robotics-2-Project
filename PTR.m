@@ -1,42 +1,49 @@
-function [q_c, dq_c, ddq_c, torque_c] = PTR(varargin)
+function [q_c, dq_c, ddq_c, trq_c, pos_err, vel_err] = PTR(varargin)
 % Peak Torque Reduction method
 disp('PTR method')
 
 t = varargin{1}; % time vector
 q0 = varargin{2}; % initial configuration
-jac = varargin{3}; % task jac
-jacinv = varargin{4}; % inverse of task jac
-q = varargin{5}; % symbolic q vector
-dq = varargin{6}; % symbolic dq vector
-p = varargin{7}; % desired cartesian trajectory
-dp = varargin{8}; % desired cartesian velocity
-ddp = varargin{9}; % desired cartesian acceleration
-ts = varargin{10}; % sampling time
-M = varargin{11}; % inertia matrix of robot
-Minv = varargin{12}; % inverse inertia matrix of robot
-c = varargin{13}; % centrifugal terms of robot
+jac = varargin{3}; % task jacobian
+q = varargin{4}; % symbolic q vector
+dq = varargin{5}; % symbolic dq vector
+p = varargin{6}; % desired cartesian trajectory
+dp = varargin{7}; % desired cartesian velocity
+ddp = varargin{8}; % desired cartesian acceleration
+ts = varargin{9}; % sampling timestep
+M = varargin{10}; % inertia matrix of robot
+c = varargin{11}; % coriolois & centrifugal terms of robot
+djac = varargin{12}; % d(jac)/dt
+fk = varargin{13}; % forward kinematics
 tb = varargin{14}; % Nx2 vector of torque joint limits
-djac = varargin{15}; % d(jac)/dt
 
 q_c(size(q0, 2), size(t, 2)) = 0;
 dq_c(size(q0, 2), size(t, 2)) = 0;
 ddq_c(size(q0, 2), size(t, 2)) = 0;
-torque_c(size(q0, 2), size(t, 2)) = 0;
+trq_c(size(q0, 2), size(t, 2)) = 0;
 
 % initial state
 q_c(:, 1) = q0;
 dq_c(:, 1) = [0; 0; 0];
 
 Wm = diag(diff(tb, 1, 2)).^2; % weight matrix for optimization
+lb = tb(:, 1); ub = tb(:, 2); % lower and upper torque bounds
+pos_err = []; vel_err = []; % errors
+Kp = 10 * eye(2); Kd = eye(2); % gains for controller
 
-lb = tb(:, 1);
-ub = tb(:, 2);
-
-for i=1:size(t, 2) - 1
+for i=1:(size(t, 2) - 1)
     % current state (already computed)
     qi = q_c(:, i); dqi = dq_c(:, i);
     
-    % next state
+    % errors (at current state)
+    fki = substitute(fk, q, qi);
+    jaci = substitute(jac, q, qi);
+    e = p(:, i) - fki;
+    de = dp(:, i) - jaci * dqi;
+    pos_err = [pos_err, full(evalf(norm(e)))];
+    vel_err = [vel_err, full(evalf(norm(de)))];
+    
+    % next configuration
     qi1 = qi + dqi * ts; % q_i+1
     q_c(:, i + 1) = qi1;
     
@@ -46,58 +53,62 @@ for i=1:size(t, 2) - 1
     
     opti = casadi.Opti();
     Ti = opti.variable(3); % current torque
-   
-    minv = (substitute(Minv, q, qi)); % Minv(q)
-    cqi = (substitute(c, [q dq], [qi dqi])); % c(qi, dqi)
-    dqi1 = dqi + (minv * (Ti - cqi)) * ts; % dq_i+1
     
-    Mqi1 = (substitute(M, q, qi1)); % M(q_i+1)
+    % dynamic variables
+    % current state
+    mqi = substitute(M, q, qi); % M(qi)
+    cqi = substitute(c, [q dq], [qi dqi]); % c(qi, dqi)
+    dqi1 = dqi + inv(mqi) * (Ti - cqi) * ts; % dq_i+1
+    
+    % next state
+    mqi1 = substitute(M, q, qi1); % M(q_i+1)
     cqi1 = simplify(substitute(c, [q dq], [qi1 dqi1])); % c(q_i+1, dq_i+1)
-    % for ddqi optimal
-    jqi1 = (substitute(jac, q, qi1)); % J(q_i+1)
-    sub_A1 = ((Mqi1.' * Wm * Mqi1) \ jqi1.'); % inv(M' * W * M) * J'
-    A = (sub_A1 / (jqi1 * sub_A1)); % A(q_i+1)
-    B = simplify((A * jqi1 - eye()) * Minv * (cqi1 - sum(tb, 2)/2));
-    B = simplify(substitute(B, [q dq], [qi1 dqi1])); % B(q_i+1, dq_i+1)
-    % ----------------
+    jqi1 = substitute(jac, q, qi1); % J(q_i+1)
     ddx = ddp(:, i + 1);
     djacqi1 = simplify(substitute(djac, [q dq], [qi1 dqi1])); % dJ(q_i+1, dq_i+1)
     
-    next_torque = simplify(Mqi1 * A * (ddx - djacqi1 * dqi1) + Mqi1 * B + cqi); % T(i+1)
+    sub_A1 = ((mqi1.' * Wm * mqi1) \ jqi1.'); % inv(M' * W * M) * J'
+    A = (sub_A1 / (jqi1 * sub_A1)); % A(q_i+1)
+    
+    % objective function (Q) and constraint
+    next_torque = mqi1 * A * (jqi1 * inv(mqi1) * cqi1 - djacqi1 * dqi1) + ...
+        mqi1 * A * ddx + mqi1 * A * jqi1 * inv(mqi1) * (0 - sum(tb, 2)/2) + sum(tb, 2)/2;
+    
     next_bounded_torque = next_torque - sum(tb, 2)/2;
     Q = simplify(0.5 * next_bounded_torque.' * Wm * next_bounded_torque);
     
-    constraint = jqi1 * (minv * (Ti - cqi)) * ts + (jqi1 * dqi);
+    constraint = simplify(jqi1 * (inv(mqi) * (Ti - cqi) * ts + dqi)) ... % rhs
+        - (dp(:, i + 1) + Kp * e); % lhs (controller)
     
-    % TODO: make sure Q and the constraint are correct then use casadi    
+    % perform minimization    
     opti.minimize( Q );
-    opti.subject_to( constraint == dp(:, i + 1) );
+    opti.subject_to();
+    opti.subject_to( constraint == 0 );
     opti.subject_to( lb <= Ti <= ub );
     
     opts_dict = struct('ipopt', struct('print_level', 0), 'print_time', false);
     opti.solver('ipopt', opts_dict);
     
-    try
-        sol = opti.solve();
-        t_opt = sol.value(Ti);
-    catch e
-        % fprintf(2, '%s', e.message)
-        i
-        t_opt = opti.debug.value(Ti)
-        % opti.debug.show_infeasibilities()
-    end
+    sol = opti.solve();
+    t_opt = sol.value(Ti);
     
-    torque_c(:, i) = t_opt;
-
+    %trq_c(:, i) = t_opt;
+    trq_c(:, i + 1) = full(evalf(substitute(next_torque, Ti, t_opt)));
     % -------------------------------------------------------------------
     
     % compute optimal acceleration generated by torque
-    ddq_c(:, i) = full(evalf(minv * (t_opt - cqi))); % no gravity
+    ddq_c(:, i) = full(evalf(inv(mqi) * (t_opt - cqi)));
     
     % compute optimal velocity at next time step
     dq_c(:, i + 1) = dqi + ddq_c(:, i) * ts;
-    
-%     break
 end
+
+% errors (at final state)
+fki = substitute(fk, q, q_c(:, end));
+jaci = substitute(jac, q, q_c(:, end));
+e = p(:, end) - fki;
+de = dp(:, end) - jaci * dqi;
+pos_err = [pos_err, full(evalf(norm(e)))];
+vel_err = [vel_err, full(evalf(norm(de)))];
 
 end

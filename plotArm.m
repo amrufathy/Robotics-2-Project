@@ -1,9 +1,9 @@
 function plotArm(q, p0, pf)
-q1 = q(1, :);
-q2 = q(2, :);
-q3 = q(3, :);
+q1 = q(1, :); q2 = q(2, :); q3 = q(3, :);
 
 figure('Name', 'Arm');
+
+% plot desired trajectory
 plot([p0(1) pf(1)], [p0(2) pf(2)], 'Color', 'black', 'LineWidth', 4); hold on;
 
 step = floor(size(q, 2) / 10);
@@ -29,8 +29,7 @@ for i = 1:step:size(q, 2)
     plot([c1 c1+c12], [s1 s1+s12], options); hold on;
     plot([c1+c12 c1+c12+c123], [s1+s12 s1+s12+s123], options); hold on;
     
-    xlabel('x [m]');
-    ylabel('y [m]');
+    xlabel('x [m]'); ylabel('y [m]');
 end
 
 end

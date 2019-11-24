@@ -20,7 +20,6 @@ fk = [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
 
 % task jacobian
 jac = jacobian(fk, q);
-jacinv = simplify(pinv(jac));
 
 % djac = 0;
 % for i=1:length(q)
@@ -40,7 +39,6 @@ M = [
 [ 5*cos(q2 + q3) + 15*cos(q2) + 10*cos(q3) + 50/3,                               10*cos(q3) + 50/3,                  5*cos(q3) + 10/3];
 [               5*cos(q2 + q3) + 5*cos(q3) + 10/3,                                5*cos(q3) + 10/3,                              10/3]
 ];
-Minv = simplify(pinv(M));
 
 % coriolis and centrifugal terms
 % precomputed symbolically using matlab
