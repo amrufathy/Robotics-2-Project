@@ -2,7 +2,7 @@
 % Author: Amr Aly
 % October 25, 2019
 
-% clear; close all; clc;
+clear; close all; clc;
 
 syms q1 q2 q3 dq1 dq2 dq3 real
 syms m l Il real
@@ -19,15 +19,14 @@ fk = l * [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
 % task jacobian
 jac = jacobian(fk, q);
 jacinv = simplify(pinv(jac));
-djac = -1 * [
-    [cos(q1) * dq1 + cos(q1 + q2) * (dq1 + dq2) + cos(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    cos(q1 + q2) * (dq1 + dq2) + cos(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    cos(q1 + q2 + q3) * (dq1 + dq2 + dq3)];
-    
-    [sin(q1) * dq1 + sin(q1 + q2) * (dq1 + dq2) + sin(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    sin(q1 + q2) * (dq1 + dq2) + sin(q1 + q2 + q3) * (dq1 + dq2 + dq3), ...
-    sin(q1 + q2 + q3) * (dq1 + dq2 + dq3)]
-];
+
+% d(jac)/dt
+djac = 0;
+for i=1:length(q)
+    djac = djac + simplify(diff(jac, q(i)) * dq(i));
+end
+djac = collect(simplify(djac), ...
+    [-1 l cos(q1+q2) cos(q1+q2+q3) sin(q1+q2) sin(q1+q2+q3)]);
 
 % position of CoM
 pc = cell(1, N);
@@ -36,12 +35,7 @@ pc{2} = [l * cos(q1) + l/2 * cos(q1 + q2); l * sin(q1) + l/2 * sin(q1 + q2)];
 pc{3} = [l * (cos(q1) + cos(q1 + q2)) + l/2 * cos(q1 + q2 + q3);
         l * (sin(q1) + sin(q1 + q2)) + l/2 * sin(q1 + q2 + q3)];
 
-% angular velocities
-w = cell(1, N);
-w{1} = [0; 0; dq1];
-w{2} = [0; 0; dq1 + dq2];
-w{3} = [0; 0; dq1 + dq2 + dq3];
-
+% linear velocities
 vc = cell(1, N);
 for i=1:N
     vc{i} = 0;
@@ -49,6 +43,12 @@ for i=1:N
         vc{i} = simplify(vc{i} + diff(pc{i}, q(j)) *  dq(j));
     end
 end
+    
+% angular velocities
+w = cell(1, N);
+w{1} = [0; 0; dq1];
+w{2} = [0; 0; dq1 + dq2];
+w{3} = [0; 0; dq1 + dq2 + dq3];
 
 % total kinetic energy
 Ti = cell(1, N);
@@ -59,11 +59,7 @@ end
 T = simplify(sum([Ti{:}]));
 
 % inertia matrix
-for i=1:N
-    for j=1:N
-        M(i, j) = simplify(diff(diff(T, dq(i)), dq(j)));
-    end
-end
+M = simplify(hessian(T, dq));
 M = collect(M, [m l^2]);
 Minv = simplify(pinv(M));
 
@@ -75,7 +71,7 @@ for i=1:N
 end
 
 % substitution of dynamic variables
-old = [m l Il]; new = [1 1 1/12];
+old = [m l Il]; new = [10 1 10/12];
 fk = subs(fk, old, new);
 jac = subs(jac, old, new);
 jacinv = subs(jacinv, old, new);
@@ -84,4 +80,4 @@ Minv = subs(Minv, old, new);
 c = subs(c, old, new);
 
 % clear unneeded vars
-clear pc vc w Ti T C m l Il
+clear pc vc w Ti T C m l Il q1 q2 q3 dq1 dq2 dq3 i j N old new
