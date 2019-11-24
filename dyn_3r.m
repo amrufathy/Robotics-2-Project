@@ -2,7 +2,7 @@
 % Author: Amr Aly
 % October 25, 2019
 
-clear; close all; clc;
+% clear; close all; clc;
 
 syms q1 q2 q3 dq1 dq2 dq3 real
 syms m l Il real

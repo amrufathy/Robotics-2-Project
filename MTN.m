@@ -29,23 +29,19 @@ for i=1:size(t, 2)
     qi = q_c(:, i); dqi = dq_c(:, i);
     
     % dynamic variables
-    Mqi = substitute(M, q, qi);
+    mqi = substitute(M, q, qi);
     jaci = substitute(jac, q, qi);
     djaci = substitute(djac, [q dq], [qi dqi]);
     ci = substitute(c, [q dq], [qi dqi]);
-    fki = substitute(fk, q, qi);
     
     % optimal ddq
-    w_jinv = inv(Mqi) * jaci.' * inv(jaci * inv(Mqi) * jaci.');
-    controller = ddp(:, i) + Kd * de + Kp * e - djaci * dqi;
-    ddqi = full(evalf(...
-        w_jinv * controller - (eye() - w_jinv * jaci) * inv(Mqi) * ci ...
-    ));
+    w_jinv = inv(mqi) * jaci.' * inv(jaci * inv(mqi) * jaci.');
+    ddqi = w_jinv * (ddp(:, i) - djaci * dqi) - (eye() - w_jinv * jaci) * inv(mqi) * ci;
 
     ddq_c(:, i) = ddqi;
     
     % min norm torque
-    t_opt = full(evalf(Mqi * ddqi + ci));
+    t_opt = mqi * ddqi + ci;
     trq_c(:, i) = t_opt;
     
     % next state (using euler integration)
