@@ -6,8 +6,6 @@
 
 import casadi.*;
 
-% syms q1 q2 q3 dq1 dq2 dq3 a2 a3 d
-
 q1 = MX.sym('q1'); q2 = MX.sym('q2'); q3 = MX.sym('q3'); 
 dq1 = MX.sym('dq1'); dq2 = MX.sym('dq2'); dq3 = MX.sym('dq3'); 
 
@@ -21,12 +19,8 @@ fk = [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
 % task jacobian
 jac = jacobian(fk, q);
 
-% djac = 0;
-% for i=1:length(q)
-%     djac = djac + simplify(diff(jac, q(i)) * dq(i));
-% end
-
-% d(J)/dt precomputed symbolically using matlab
+% d(J)/dt
+% precomputed symbolically using matlab
 djac = [
 [ - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3) - dq1*cos(q1), - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3), -(dq1 + dq2 + dq3)*cos(q1 + q2 + q3)];
 [ - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3) - dq1*sin(q1), - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3), -(dq1 + dq2 + dq3)*sin(q1 + q2 + q3)]
