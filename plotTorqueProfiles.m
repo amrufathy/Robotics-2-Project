@@ -7,11 +7,13 @@ xlim = [0 t(end)]; options = struct('Color', 'red', 'LineWidth', 2);
 
 % first joint
 sp(1) = subplot(3,1,1);
+% plot torque commands of each method
 plot(t, mtn_trq(1, :), '-c', 'LineWidth', 3); hold on;
 plot(t, ptr_trq(1, :), '-.', ...
      t, mtnb_trq(1, :), '--g', ...
      t, mbp_trq(1, :), ':m', 'LineWidth', 2);
 grid on;
+% plot torque limits
 line(xlim, tb(1, 1).*[1, 1], options); line(xlim, tb(1, 2).*[1, 1], options);
 ylim([tb(1, 1)*1.5 tb(1, 2)*1.5]); ylabel(sp(1), 'Joint 1 [N.m]');
 legend('MTN', 'PTR', 'MTNB', 'MBP', 'Limit', ...
@@ -38,9 +40,9 @@ line(xlim, tb(3, 1).*[1, 1], options); line(xlim, tb(3, 2).*[1, 1], options);
 ylim([tb(3, 1)*1.5 tb(3, 2)*1.5]); ylabel(sp(3), 'Joint 3 [N.m]');
 
 linkaxes(sp,'x');
-% sgtitle(sprintf('Torque profiles for %s movement', move_str));
 xlabel(sp(3), 'Time [s]');
 
+% save figure and PNG
 print(fig, sprintf('%s_trq_prf.png', move_str),'-dpng','-r300');
 savefig(sprintf('%s_trq_prf.fig', move_str));
 end

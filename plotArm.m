@@ -4,12 +4,14 @@ methods = {'PTR', 'MTNB', 'MTN', 'MBP'};
 
 for j=1:4
     q = arm_motions{j};
+    % joint configurations
     q1 = q(1, :); q2 = q(2, :); q3 = q(3, :);
 
     % plot desired trajectory
     subplot(2, 2, j);
     plot([p0(1) pf(1)], [p0(2) pf(2)], 'Color', 'black', 'LineWidth', 4); hold on;
 
+    % continual motion with evenly-spaced steps
     step = floor(size(q, 2) / 10);
     for i = 1:step:size(q, 2)
         axis square; grid on;

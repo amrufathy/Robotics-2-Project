@@ -85,6 +85,7 @@ for i=1:len - 1
     opts.print_time = 0;
     opti.solver('ipopt', opts);
     
+    % initial torque
     djacqi = substitute(djac, [q dq], [qi dqi]); % dJ(q, dq)
     ddq_init = pinv(jaci) * (ddp(:, i) - djacqi * dqi);
     torq_init = full(evalf(mqi * ddq_init + cqi));

@@ -39,13 +39,13 @@ for i=1:len
     % errors
     e = p(:, i) - fki;
     de = dp(:, i) - jaci * dqi;
-    
     pos_err = [pos_err, full(evalf(norm(e)))];
     vel_err = [vel_err, full(evalf(norm(de)))];
     
     % optimal ddq
     minv = inv(mqi);
     w_jinv = minv^2 * jaci' * inv(jaci * minv^2 * jaci');
+    
     controller = ddp(:, i) + Kd * de + Kp * e - djaci * dqi;
     ddqi = full(evalf(...
         w_jinv * controller - (eye(3) - w_jinv * jaci) * minv * ci ...

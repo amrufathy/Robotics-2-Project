@@ -27,6 +27,7 @@ pos_err = []; vel_err = []; % errors
 Kp = 10 * eye(2); Kd = eye(2); % gains for controller
 
 for i=1:len
+    % preview window
     T = 100*ts;
     
     % current state (already computed)
@@ -87,7 +88,6 @@ for i=1:len
         dq_c(:, i + 1) = dqi + ddqi * ts;
         q_c(:, i + 1) = qi + dqi * ts + 0.5 * ddqi * ts^2;
     end
-    
 end
 
 outputs = {q_c, dq_c, ddq_c, trq_c, pos_err, vel_err};
