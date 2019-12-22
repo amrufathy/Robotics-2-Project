@@ -8,6 +8,11 @@
 close all; clc;
 addpath('../casadi-linux-matlabR2014b-v3.5.1')
 
+% create results dir
+if ~exist('results', 'dir')
+    mkdir('results')
+end
+
 % invoke 3R dynamic model
 dyn_3r;
 
@@ -43,9 +48,9 @@ inputs = {t, q0, jac, q, dq, p, dp, ddp, ts, M, c, djac, fk, tb, S, len};
 % mbp_out = MBP(inputs);
 
 % outputs = {ptr_out, mtnb_out, mtn_out, mbp_out};
-% save(sprintf('%s.mat', move_str), 'outputs')
+% save(sprintf('results/%s.mat', move_str), 'outputs')
 
-load(sprintf('%s.mat', move_str))
+load(sprintf('results/%s.mat', move_str))
 [ptr_out, mtnb_out, mtn_out, mbp_out] = outputs{:};
 
 % generate plots

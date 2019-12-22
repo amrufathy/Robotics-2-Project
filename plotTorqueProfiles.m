@@ -43,6 +43,6 @@ linkaxes(sp,'x');
 xlabel(sp(3), 'Time [s]');
 
 % save figure and PNG
-print(fig, sprintf('%s_trq_prf.png', move_str),'-dpng','-r300');
-savefig(sprintf('%s_trq_prf.fig', move_str));
+print(fig, sprintf('results/%s_trq_prf.png', move_str),'-dpng','-r300');
+savefig(sprintf('results/%s_trq_prf.fig', move_str));
 end

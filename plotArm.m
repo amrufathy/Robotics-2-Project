@@ -41,6 +41,6 @@ for j=1:4
     title(methods{j});
 end
 
-print(fig, sprintf('%s_arm_motions.png', move_str),'-dpng','-r300');
-savefig(sprintf('%s_arm_motions.fig', move_str));
+print(fig, sprintf('results/%s_arm_motions.png', move_str),'-dpng','-r300');
+savefig(sprintf('results/%s_arm_motions.fig', move_str));
 end
