@@ -4,80 +4,50 @@
 
 % clear; close all; clc;
 
-syms q1 q2 q3 dq1 dq2 dq3 real
-syms m l Il real
+import casadi.*;
 
-N = 3;
+q1 = MX.sym('q1'); q2 = MX.sym('q2'); q3 = MX.sym('q3'); 
+dq1 = MX.sym('dq1'); dq2 = MX.sym('dq2'); dq3 = MX.sym('dq3'); 
 
 q = [q1; q2; q3];
 dq = [dq1; dq2; dq3];
 
 % forward kinematics
-fk = l * [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
+fk = [cos(q1) + cos(q1 + q2) + cos(q1 + q2 + q3);
         sin(q1) + sin(q1 + q2) + sin(q1 + q2 + q3)];
 
 % task jacobian
 jac = jacobian(fk, q);
-jacinv = simplify(pinv(jac));
 
-% d(jac)/dt
-djac = 0;
-for i=1:length(q)
-    djac = djac + simplify(diff(jac, q(i)) * dq(i));
-end
-djac = collect(simplify(djac), ...
-    [-1 l cos(q1+q2) cos(q1+q2+q3) sin(q1+q2) sin(q1+q2+q3)]);
-
-% position of CoM
-pc = cell(1, N);
-pc{1} = [l/2 * cos(q1); l/2 * sin(q1)];
-pc{2} = [l * cos(q1) + l/2 * cos(q1 + q2); l * sin(q1) + l/2 * sin(q1 + q2)];
-pc{3} = [l * (cos(q1) + cos(q1 + q2)) + l/2 * cos(q1 + q2 + q3);
-        l * (sin(q1) + sin(q1 + q2)) + l/2 * sin(q1 + q2 + q3)];
-
-% linear velocities
-vc = cell(1, N);
-for i=1:N
-    vc{i} = 0;
-    for j=1:i
-        vc{i} = simplify(vc{i} + diff(pc{i}, q(j)) *  dq(j));
-    end
-end
-    
-% angular velocities
-w = cell(1, N);
-w{1} = [0; 0; dq1];
-w{2} = [0; 0; dq1 + dq2];
-w{3} = [0; 0; dq1 + dq2 + dq3];
-
-% total kinetic energy
-Ti = cell(1, N);
-for i=1:N
-    Ti{i} = simplify(0.5 * m * vc{i}' * vc{i} + ...
-        0.5 * Il * w{i}' * w{i});
-end
-T = simplify(sum([Ti{:}]));
+% d(J)/dt
+% precomputed symbolically using matlab
+djac = [
+[ - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3) - dq1*cos(q1), - (dq1 + dq2)*cos(q1 + q2) - (dq1 + dq2 + dq3)*cos(q1 + q2 + q3), -(dq1 + dq2 + dq3)*cos(q1 + q2 + q3)];
+[ - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3) - dq1*sin(q1), - (dq1 + dq2)*sin(q1 + q2) - (dq1 + dq2 + dq3)*sin(q1 + q2 + q3), -(dq1 + dq2 + dq3)*sin(q1 + q2 + q3)]
+];
 
 % inertia matrix
-M = simplify(hessian(T, dq));
-M = collect(M, [m l^2]);
-Minv = simplify(pinv(M));
+% precomputed symbolically using matlab
+M = [ 
+[  10*cos(q2 + q3) + 30*cos(q2) + 10*cos(q3) + 40, 5*cos(q2 + q3) + 15*cos(q2) + 10*cos(q3) + 50/3, 5*cos(q2 + q3) + 5*cos(q3) + 10/3];
+[ 5*cos(q2 + q3) + 15*cos(q2) + 10*cos(q3) + 50/3,                               10*cos(q3) + 50/3,                  5*cos(q3) + 10/3];
+[               5*cos(q2 + q3) + 5*cos(q3) + 10/3,                                5*cos(q3) + 10/3,                              10/3]
+];
 
 % coriolis and centrifugal terms
-c = [];
-for i=1:N
-    C = 0.5 * (jacobian(M(:, i), q) + jacobian(M(:, i), q)' - diff(M, q(i)));
-    c = [c; simplify(dq' * C * dq)];
-end
+% precomputed symbolically using matlab
+c = [
+ (- 15*dq2^2 - 30*dq1*dq2)*sin(q2) + (- 10*dq1*dq3 - 10*dq2*dq3 - 5*dq3^2)*sin(q3) + (- 5*dq2^2 - 10*dq2*dq3 - 10*dq1*dq2 - 5*dq3^2 - 10*dq1*dq3)*sin(q2 + q3);
+                                                                       15*dq1^2*sin(q2) + (- 10*dq1*dq3 - 10*dq2*dq3 - 5*dq3^2)*sin(q3) + 5*dq1^2*sin(q2 + q3);
+                                                                                               (5*dq1^2 + 10*dq1*dq2 + 5*dq2^2)*sin(q3) + 5*dq1^2*sin(q2 + q3)
+];
 
-% substitution of dynamic variables
-old = [m l Il]; new = [10 1 10/12];
-fk = subs(fk, old, new);
-jac = subs(jac, old, new);
-jacinv = subs(jacinv, old, new);
-M = subs(M, old, new);
-Minv = subs(Minv, old, new);
-c = subs(c, old, new);
+S = [ 
+[ (-15*dq2)*sin(q2) + (-5*dq3)*sin(q3) + (- 5*dq2 - 5*dq3)*sin(q2 + q3), (- 15*dq1 - 15*dq2)*sin(q2) + (-5*dq3)*sin(q3) + (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q2 + q3), (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q3) + (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q2 + q3)];
+[                15*dq1*sin(q2) + (-5*dq3)*sin(q3) + 5*dq1*sin(q2 + q3),                                                                        (-5*dq3)*sin(q3),                                          (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q3)];
+[                          (5*dq1 + 5*dq2)*sin(q3) + 5*dq1*sin(q2 + q3),                                                                 (5*dq1 + 5*dq2)*sin(q3),                                                                          0]
+];
 
+disp('Computed dynamic model...')
 % clear unneeded vars
-clear pc vc w Ti T C m l Il q1 q2 q3 dq1 dq2 dq3 i j N old new
+clear q1 q2 q3 dq1 dq2 dq3

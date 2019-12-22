@@ -1,6 +1,6 @@
-function [outputs] = MTN(args)
-% Min Torque Norm method
-disp('MTN method')
+function [outputs] = MTNB(args)
+% Min Torque Norm - with bounds method
+disp('MTNB method')
 
 import casadi.*;
 
@@ -16,12 +16,14 @@ M = args{10}; % inertia matrix of robot
 c = args{11}; % coriolois & centrifugal terms of robot
 djac = args{12}; % d(jac)/dt
 fk = args{13}; % forward kinematics
+tb = args{14}; % Nx2 vector of torque joint limits
 len = args{16}; % length of motion
 
 % initial state
 q_c(:, 1) = q0;
 dq_c(:, 1) = [0; 0; 0];
 
+W = diag(1./(diff(tb, 1, 2).^2)); % weight matrix for optimization
 pos_err = []; vel_err = []; % errors
 Kp = 10 * eye(2); Kd = eye(2); % gains for controller
 
@@ -39,17 +41,17 @@ for i=1:len
     % errors
     e = p(:, i) - fki;
     de = dp(:, i) - jaci * dqi;
-    
     pos_err = [pos_err, full(evalf(norm(e)))];
     vel_err = [vel_err, full(evalf(norm(de)))];
     
     % optimal ddq
     minv = inv(mqi);
-    w_jinv = minv^2 * jaci' * inv(jaci * minv^2 * jaci');
+    sub_A1 = ((mqi' * W * mqi) \ jaci'); % inv(M' * W * M) * J'
+    A = (sub_A1 / (jaci * sub_A1)); % A(qi)
+    B = (A * jaci - eye(3)) * minv * (ci - sum(tb, 2));
+    
     controller = ddp(:, i) + Kd * de + Kp * e - djaci * dqi;
-    ddqi = full(evalf(...
-        w_jinv * controller - (eye(3) - w_jinv * jaci) * minv * ci ...
-    ));
+    ddqi = full(evalf( A * controller + B ));
     
     ddq_c(:, i) = ddqi;
     
