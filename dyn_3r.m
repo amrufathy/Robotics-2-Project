@@ -42,6 +42,12 @@ c = [
                                                                                                (5*dq1^2 + 10*dq1*dq2 + 5*dq2^2)*sin(q3) + 5*dq1^2*sin(q2 + q3)
 ];
 
+S = [ 
+[ (-15*dq2)*sin(q2) + (-5*dq3)*sin(q3) + (- 5*dq2 - 5*dq3)*sin(q2 + q3), (- 15*dq1 - 15*dq2)*sin(q2) + (-5*dq3)*sin(q3) + (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q2 + q3), (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q3) + (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q2 + q3)];
+[                15*dq1*sin(q2) + (-5*dq3)*sin(q3) + 5*dq1*sin(q2 + q3),                                                                        (-5*dq3)*sin(q3),                                          (- 5*dq1 - 5*dq2 - 5*dq3)*sin(q3)];
+[                          (5*dq1 + 5*dq2)*sin(q3) + 5*dq1*sin(q2 + q3),                                                                 (5*dq1 + 5*dq2)*sin(q3),                                                                          0]
+];
+
 disp('Computed dynamic model...')
 % clear unneeded vars
 clear q1 q2 q3 dq1 dq2 dq3
