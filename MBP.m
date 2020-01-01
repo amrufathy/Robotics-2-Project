@@ -1,4 +1,4 @@
-function [outputs] = MBP(args)
+function [outputs, trq_nxt] = MBP(args)
 % Model Based Preview method
 disp('MBP method')
 
@@ -46,6 +46,7 @@ for i=1:len
     mqi1 = substitute(M, q, qi1);
     jaci1 = substitute(jac, q, qi1);
     hqi1 = ((jaci1 - jaci) / T) * dqi;
+    cqi1 = substitute(c, [q dq], [qi1 dqi]);
     sqi1 = substitute(S, [q dq], [qi1 dqi]);
     
     % errors
@@ -76,12 +77,12 @@ for i=1:len
         A_winv * b - (eye(6) - A_winv * A) * inv(Q) * r...
     ));
     
-    ddqi = ddqi(1:3);
+    ddqi1 = ddqi(4:6); ddqi = ddqi(1:3);
     ddq_c(:, i) = ddqi;
     
     % min norm torque
-    t_opt = full(evalf(mqi * ddqi + cqi));
-    trq_c(:, i) = t_opt;
+    trq_c(:, i) = full(evalf(mqi * ddqi + cqi));
+    trq_nxt(:, i) = full(evalf(mqi1 * ddqi1 + cqi1));
     
     % next state (using euler integration)
     if i ~= len
