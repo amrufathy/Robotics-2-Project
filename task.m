@@ -66,3 +66,6 @@ velocities = {ptr_out{2}, mtnb_out{2}, mtn_out{2}, mbp_out{2}};
 plotNorms(t(1:len), torques, velocities, move_str);
 
 plotEstimatedTorque(t(1:len), ptr_nxt_trq, mbp_nxt_trq, move_str);
+
+%% video
+videoSimulation(arm_motions, move_str)
