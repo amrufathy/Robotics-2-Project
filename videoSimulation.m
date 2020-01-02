@@ -255,7 +255,7 @@ for i = 1 : N
 end
 
 %% save video
-v = VideoWriter(sprintf('%s_vid_sim', move_str));
+v = VideoWriter(sprintf('results/%s_vid_sim', move_str));
 v.FrameRate = 90;
 v.Quality = 100;
 open(v);
