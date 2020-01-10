@@ -44,20 +44,25 @@ ts = 0.001;
 inputs = {t, q0, jac, q, dq, p, dp, ddp, ts, M, c, djac, fk, tb, S, len};
 
 % apply methods
-[ptr_out, ptr_nxt_trq] = PTR(inputs);
+mtn_out = MTN(inputs, 0);
 mtnb_out = MTNB(inputs);
-mtn_out = MTN(inputs);
-[mbp_out, mbp_nxt_trq] = MBP(inputs);
+mtnd_out = MTN(inputs, 1);
+[ptr_out, ptr_nxt_trq] = PTR(inputs);
+[mbp_out, mbp_nxt_trq] = MBP(inputs, 0);
+[mbpd_out, ~] = MBP(inputs, 1);
 
-% outputs = {ptr_out, mtnb_out, mtn_out, mbp_out};
-% save(sprintf('results/%s.mat', move_str), 'outputs')
+outputs = {mtn_out, mtnb_out, mtnd_out, ptr_out, mbp_out, mbpd_out};
+save(sprintf('results/%s.mat', move_str), 'outputs')
 
 % load(sprintf('results/%s.mat', move_str))
-% [ptr_out, mtnb_out, mtn_out, mbp_out] = outputs{:};
+% [mtn_out, mtnb_out, mtnd_out, ptr_out, mbp_out, mbpd_out] = outputs{:};
 
 %% generate plots
 torques = {ptr_out{4}, mtnb_out{4}, mtn_out{4}, mbp_out{4}};
 plotTorqueProfiles(t(1:len), torques, tb, move_str)
+
+damp_torques = {mtnd_out{4}, mbpd_out{4}};
+plotDampTorques(t(1:len), damp_torques, tb, move_str)
 
 arm_motions = {ptr_out{1}, mtnb_out{1}, mtn_out{1}, mbp_out{1}};
 plotArm(arm_motions, p0, pf, move_str)

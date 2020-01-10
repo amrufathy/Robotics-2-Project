@@ -1,6 +1,16 @@
-function [outputs, trq_nxt] = MBP(args)
+function [outputs, trq_nxt] = MBP(args, damp)
 % Model Based Preview method
-disp('MBP method')
+
+% use damping
+if damp == 1
+    D = 10 * eye(3);
+    disp_str = 'MBPD method';
+else
+    D = zeros(3, 3);
+    disp_str = 'MBP method';
+end
+
+disp(disp_str)
 
 import casadi.*;
 
@@ -40,6 +50,7 @@ for i=1:len
     mqi = substitute(M, q, qi);
     jaci = substitute(jac, q, qi);
     cqi = substitute(c, [q dq], [qi dqi]);
+    sqi = substitute(S, [q dq], [qi dqi]) + D * mqi;
     hqi = substitute(djac, [q dq], [qi dqi]) * dqi;
     fki = substitute(fk, q, qi);
     
@@ -47,7 +58,7 @@ for i=1:len
     jaci1 = substitute(jac, q, qi1);
     hqi1 = ((jaci1 - jaci) / T) * dqi;
     cqi1 = substitute(c, [q dq], [qi1 dqi]);
-    sqi1 = substitute(S, [q dq], [qi1 dqi]);
+    sqi1 = substitute(S, [q dq], [qi1 dqi]) + D * mqi1;
     
     % errors
     e = p(:, i) - fki;
@@ -60,7 +71,7 @@ for i=1:len
     Q12 = T * sqi1' * mqi1; Q21 = Q12; Q22 = mqi1^2;
     Q = [Q11 Q12; Q21 Q22];
     
-    r11 = mqi * cqi + T * sqi1' * sqi1 * dqi;
+    r11 = mqi * sqi * dqi + T * sqi1' * sqi1 * dqi;
     r21 = mqi1 * sqi1 * dqi;
     r = [r11; r21];
     

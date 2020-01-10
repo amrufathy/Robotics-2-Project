@@ -1,6 +1,16 @@
-function [outputs] = MTN(args)
+function [outputs] = MTN(args, damp)
 % Min Torque Norm method
-disp('MTN method')
+
+% use damping
+if damp == 1
+    D = 10 * eye(3);
+    disp_str = 'MTND method';
+else
+    D = zeros(3, 3);
+    disp_str = 'MTN method';
+end
+
+disp(disp_str)
 
 import casadi.*;
 
@@ -16,6 +26,7 @@ M = args{10}; % inertia matrix of robot
 c = args{11}; % coriolois & centrifugal terms of robot
 djac = args{12}; % d(jac)/dt
 fk = args{13}; % forward kinematics
+S = args{15}; % factorization matrix for centrifugal terms
 len = args{16}; % length of motion
 
 % initial state
@@ -34,6 +45,7 @@ for i=1:len
     jaci = substitute(jac, q, qi);
     djaci = substitute(djac, [q dq], [qi dqi]);
     ci = substitute(c, [q dq], [qi dqi]);
+    sqi = substitute(S, [q dq], [qi dqi]) + D * mqi;
     fki = substitute(fk, q, qi);
     
     % errors
@@ -48,14 +60,13 @@ for i=1:len
     
     controller = ddp(:, i) + Kd * de + Kp * e - djaci * dqi;
     ddqi = full(evalf(...
-        w_jinv * controller - (eye(3) - w_jinv * jaci) * minv * ci ...
+        w_jinv * controller - (eye(3) - w_jinv * jaci) * minv * sqi * dqi ...
     ));
     
     ddq_c(:, i) = ddqi;
     
     % min norm torque
-    t_opt = full(evalf(mqi * ddqi + ci));
-    trq_c(:, i) = t_opt;
+    trq_c(:, i) = full(evalf(mqi * ddqi + ci));
     
     % next state (using euler integration)
     if i ~= len

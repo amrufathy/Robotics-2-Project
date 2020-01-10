@@ -56,8 +56,7 @@ for i=1:len
     ddq_c(:, i) = ddqi;
     
     % min norm torque
-    t_opt = full(evalf(mqi * ddqi + ci));
-    trq_c(:, i) = t_opt;
+    trq_c(:, i) = full(evalf(mqi * ddqi + ci));
     
     % next state (using euler integration)
     if i ~= len
