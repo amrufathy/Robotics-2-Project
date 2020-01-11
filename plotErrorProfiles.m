@@ -1,4 +1,6 @@
 function [] = plotErrorProfiles(t, e, de)
+% plot given error profiles (position & velocity)
+
 figure('Name', 'Error Profiles');
 axis square;
 sp(1) = subplot(2,1,1); plot(t, e); grid on;

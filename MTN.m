@@ -1,5 +1,5 @@
 function [outputs] = MTN(args, damp)
-% Min Torque Norm method
+% Min Torque Norm (-with damping) method
 
 % use damping
 if damp == 1

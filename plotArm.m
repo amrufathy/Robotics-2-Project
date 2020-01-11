@@ -1,4 +1,6 @@
 function plotArm(arm_motions, p0, pf, move_str)
+% plot continuous motion profiles for each method
+
 fig = figure('Name', 'Arm');
 methods = {'PTR', 'MTNB', 'MTN', 'MBP'};
 

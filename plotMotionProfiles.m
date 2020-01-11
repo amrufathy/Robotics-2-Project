@@ -1,4 +1,6 @@
 function [] = plotMotionProfiles(t, p, dp, ddp)
+% plot motion profiles (pos, vel, acc)
+
 figure('Name', 'Motion profiles');
 sp(1) = subplot(3,1,1); plot(t, p); grid on;
 sp(2) = subplot(3,1,2); plot(t, dp); grid on;

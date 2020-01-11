@@ -1,5 +1,5 @@
 function [t, p, dp, ddp, len] = generateLinearTrajectory(A, L, p0)
-% generate a linear trajectory with L along x/y axis
+% generate a linear trajectory of length L along x/y axis
 %   respecting the max acceleration bound (A)
     
     % timing law

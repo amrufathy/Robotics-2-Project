@@ -1,4 +1,6 @@
 function plotTorqueProfiles(t, torques, tb, move_str)
+% plot & compare torque profiles
+
 fig = figure('Name', 'Torque profile');
 axis square;
 xlim = [0 t(end)]; options = struct('Color', 'red', 'LineWidth', 2);

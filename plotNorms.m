@@ -1,4 +1,6 @@
 function plotNorms(t, torques, velocities, move_str)
+% plot torque and joint velocities norms
+
 % torque norm
 [ptr_trq, mtnb_trq, mtn_trq, mbp_trq] = torques{:};
 

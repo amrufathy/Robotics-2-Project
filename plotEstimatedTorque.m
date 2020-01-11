@@ -1,4 +1,6 @@
 function plotEstimatedTorque(t, ptr_trq, mbp_trq, move_str)
+% plot estimated future torque profiles (PTR & MBP methods only)
+
 ptr_trq_nrm = vecnorm(ptr_trq, 2, 1);
 mbp_trq_nrm = vecnorm(mbp_trq, 2, 1);
 

@@ -1,6 +1,5 @@
 % Dynamic model of 3R planar robot using lagrangian method
 % Author: Amr Aly
-% October 25, 2019
 
 clear; close all; clc;
 

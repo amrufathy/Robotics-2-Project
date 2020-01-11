@@ -2,6 +2,7 @@
 % Main file to run experiments
 % Set trajectory parameters then choose
 %   torque minimization method
+% Finally generate required plots
 %------------
 
 % clear;

@@ -1,4 +1,6 @@
 function [] = plotState(t, q, dq, ddq)
+% plot state evolution of a robot
+
 % plot q
 figure('Name', 'Joint configuration profile');
 axis square;

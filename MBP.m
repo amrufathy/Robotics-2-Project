@@ -1,5 +1,5 @@
 function [outputs, trq_nxt] = MBP(args, damp)
-% Model Based Preview method
+% Model Based Preview (-with damping) method
 
 % use damping
 if damp == 1

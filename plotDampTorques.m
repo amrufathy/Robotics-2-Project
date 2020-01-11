@@ -1,4 +1,6 @@
 function plotDampTorques(t, torques, tb, move_str)
+% plot torque profiles for damping methods
+
 fig = figure('Name', 'Damp Torque profile');
 axis square;
 xlim = [0 t(end)]; options = struct('Color', 'red', 'LineWidth', 2);
